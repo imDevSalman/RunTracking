@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/runFragment"
+        android:icon="@drawable/ic_baseline_run_24"
+        android:title="@string/your_runs" />
+
+    <item
+        android:id="@+id/statisticsFragment"
+        android:icon="@drawable/ic_baseline_graph_24"
+        android:title="@string/statistics" />
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_baseline_settings_24"
+        android:title="@string/settings" />
+</menu>
