@@ -6,14 +6,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.sonicmaster.runningapp.R
 import com.sonicmaster.runningapp.adapters.RunAdapter
 import com.sonicmaster.runningapp.databinding.FragmentRunBinding
+import com.sonicmaster.runningapp.db.Run
 import com.sonicmaster.runningapp.ui.viewmodels.MainViewModel
+import com.sonicmaster.runningapp.utils.SortType
 import com.sonicmaster.runningapp.utils.Utility
 import dagger.hilt.android.AndroidEntryPoint
 import pub.devrel.easypermissions.EasyPermissions
@@ -41,7 +45,36 @@ class RunFragment : Fragment() {
         requestPermission()
         setupRecyclerView()
 
-        viewModel.runSortedByDate.observe(viewLifecycleOwner, {
+        when (viewModel.sortType) {
+            SortType.DATE -> binding.spFilter.setSelection(0)
+            SortType.RUNNING_TIME -> binding.spFilter.setSelection(1)
+            SortType.DISTANCE -> binding.spFilter.setSelection(2)
+            SortType.AVG_SPEED -> binding.spFilter.setSelection(3)
+            SortType.CALORIES_BURNED -> binding.spFilter.setSelection(4)
+        }
+
+        binding.spFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                when (position) {
+                    0 -> viewModel.sortRuns(SortType.DATE)
+                    1 -> viewModel.sortRuns(SortType.RUNNING_TIME)
+                    2 -> viewModel.sortRuns(SortType.DISTANCE)
+                    3 -> viewModel.sortRuns(SortType.AVG_SPEED)
+                    4 -> viewModel.sortRuns(SortType.CALORIES_BURNED)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
+        }
+
+        viewModel.runs.observe(viewLifecycleOwner, {
             runAdapter.submitList(it)
         })
 
@@ -50,6 +83,23 @@ class RunFragment : Fragment() {
                 findNavController().navigate(R.id.action_runFragment_to_trackingFragment)
             }
         }
+
+        runAdapter.setOnItemLongClickListener {
+            showAlert(it)
+        }
+    }
+
+    private fun showAlert(run: Run) {
+        val dialog = MaterialAlertDialogBuilder(
+            requireContext()
+        ).setTitle("Delete the Run?")
+            .setMessage("Are you sure you want to delete this run and delete all its data?")
+            .setIcon(R.drawable.ic_baseline_delete_24)
+            .setPositiveButton("Yes") { _, _ ->
+                viewModel.deleteRun(run)
+            }
+            .setNegativeButton("No") { dialogInterface, _ -> dialogInterface.cancel() }
+        dialog.show()
     }
 
     private fun setupRecyclerView() = binding.runRecyclerView.apply {

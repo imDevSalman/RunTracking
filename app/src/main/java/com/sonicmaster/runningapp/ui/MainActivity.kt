@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.apply {
             bottomNav.setupWithNavController(navHostFragment.navController)
+            bottomNav.setOnItemReselectedListener { }
 
             navHostFragment.navController
                 .addOnDestinationChangedListener { _, destination, _ ->

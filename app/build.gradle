@@ -85,5 +85,5 @@ dependencies {
     //EasyPermission
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-    compileOnly files('libs/MPAndroidChart-v3.0.1.jar')
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }

@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.TextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -18,8 +18,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
+    private var onItemLongClickListener: ((Run) -> Unit)? = null
 
     inner class RunViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val parentLayout: LinearLayoutCompat = itemView.findViewById(R.id.parentLayout)
         val imageView: ImageView = itemView.findViewById(R.id.ivRunImage)
         val dateTextView: MaterialTextView = itemView.findViewById(R.id.tvDate)
         val avgSpeedTextView: MaterialTextView = itemView.findViewById(R.id.tvAvgSpeed)
@@ -28,7 +30,7 @@ class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
         val caloriesTextView: MaterialTextView = itemView.findViewById(R.id.tvCalories)
     }
 
-    val diffCallback = object : DiffUtil.ItemCallback<Run>() {
+    private val diffCallback = object : DiffUtil.ItemCallback<Run>() {
         override fun areItemsTheSame(oldItem: Run, newItem: Run): Boolean {
             return oldItem.id == newItem.id
         }
@@ -38,7 +40,7 @@ class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
         }
     }
 
-    val differ = AsyncListDiffer(this, diffCallback)
+    private val differ = AsyncListDiffer(this, diffCallback)
 
     fun submitList(list: List<Run>) = differ.submitList(list)
 
@@ -51,16 +53,19 @@ class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: RunAdapter.RunViewHolder, position: Int) {
         val run = differ.currentList[position]
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = run.timeInMillis
-        }
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
         holder.apply {
+            parentLayout.setOnLongClickListener {
+                onItemLongClickListener?.let {
+                    it(run)
+                }
+                true
+            }
             imageView.apply {
                 Glide.with(this).load(run.image).into(this)
             }
-            dateTextView.text = dateFormat.format(calendar.time)
+            dateTextView.text = dateFormat.format(run.timestamp)
             avgSpeedTextView.text = "${run.avgSpeed}km/h"
             distanceInKms.text = "${run.distanceInMeters / 1000f}km"
             timeTextView.text = getFormattedTime(run.timeInMillis)
@@ -71,4 +76,9 @@ class RunAdapter : RecyclerView.Adapter<RunAdapter.RunViewHolder>() {
     override fun getItemCount(): Int {
         return differ.currentList.size
     }
+
+    fun setOnItemLongClickListener(listener: (Run) -> Unit) {
+        onItemLongClickListener = listener
+    }
+
 }

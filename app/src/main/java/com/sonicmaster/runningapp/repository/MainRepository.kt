@@ -27,4 +27,6 @@ constructor(val runDao: RunDao) {
     fun getTotalCaloriesBurned() = runDao.getTotalCaloriesBurned()
 
     fun getTotalTimeInMillis() = runDao.getTotalTimeInMillis()
+
+    fun getTotalDistance() = runDao.getTotalDistanceInMeters()
 }

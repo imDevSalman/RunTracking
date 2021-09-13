@@ -29,8 +29,11 @@ import com.sonicmaster.runningapp.utils.Utility.ACTION_STOP_SERVICE
 import com.sonicmaster.runningapp.utils.Utility.calculatePolylineLength
 import com.sonicmaster.runningapp.utils.Utility.getFormattedTime
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 import kotlin.math.round
+import kotlin.properties.Delegates
 
 @AndroidEntryPoint
 class TrackingFragment : Fragment(R.layout.fragment_tracking) {
@@ -41,7 +44,9 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     private var isTracking = false
     private var pathPoints = mutableListOf<Polyline>()
     private var currentTimeInMillis = 0L
-    private val weight = 80f
+
+    @set:Inject
+    var weight = 80f
 
     private var menu: Menu? = null
 
@@ -71,6 +76,12 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
             btnToggleRun.setOnClickListener {
                 toggleRun()
+            }
+
+            if (savedInstanceState != null) {
+                val cancelDialog =
+                    parentFragmentManager.findFragmentByTag("CANCEL_RUN_TAG") as CancelDialog?
+                cancelDialog?.setClickListener { stopRun() }
             }
 
             btnFinishRun.setOnClickListener {
@@ -105,18 +116,11 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     }
 
     private fun showCancelRunDialog() {
-        val dialog = MaterialAlertDialogBuilder(
-            requireContext()
-        ).setTitle("Cancel the Run?")
-            .setMessage("Are you sure you want to cancel the run and delete all its data?")
-            .setIcon(R.drawable.ic_baseline_delete_24)
-            .setPositiveButton("Yes") { _, _ ->
-                binding.btnFinishRun.visibility = View.GONE
+        CancelDialog().apply {
+            setClickListener {
                 stopRun()
             }
-            .setNegativeButton("No") { dialogInterface, _ -> dialogInterface.cancel() }
-
-        dialog.show()
+        }.show(parentFragmentManager, "CANCEL_RUN_TAG")
     }
 
     private fun zoomToSeeWholeTrack() {
@@ -147,6 +151,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
                 round((distanceInMeters / 1000f) / (currentTimeInMillis / 1000f / 60 / 60) * 10) / 10f
 
             val dateTimestamp = Calendar.getInstance().timeInMillis
+
             val caloriesBurned = ((distanceInMeters / 1000f) * weight).toInt()
             val run = Run(
                 bmp,
@@ -200,7 +205,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun updateTracking(isTracking: Boolean) {
         this.isTracking = isTracking
-        if (!isTracking) {
+        if (!isTracking && currentTimeInMillis > 0L) {
             binding.apply {
                 btnToggleRun.setImageDrawable(
                     ResourcesCompat.getDrawable(
@@ -211,7 +216,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
                 )
                 btnFinishRun.visibility = View.VISIBLE
             }
-        } else {
+        } else if (isTracking) {
             menu?.getItem(0)?.isVisible = true
             binding.apply {
                 btnToggleRun.setImageDrawable(
@@ -298,5 +303,4 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             it.action = action
             requireContext().startService(it)
         }
-
 }
